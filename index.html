@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>item-counter</title>
+<!-- https://github.com/siimple/siimple -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/siimple@3.0.0/dist/siimple.min.css">
+</head>
+<body>
+<div class="siimple-grid siimple-content">
+  <div class="siimple-grid-row">
+    <div class="siimple-grid-col siimple-grid-col-12">
+      <header>
+          <h1>Item Counter</h1>
+          <p>何かアイテムをカウントしたいときに使うサイト</p>
+      </header>
+    </div>
+  </div>
+  <div class="siimple-grid-row">
+    <div class="siimple-grid-col siimple-grid-col--11">
+      <input id="text-field" type="text" class="siimple-input siimple-input--fluid" placeholder="Item ...">
+    </div>
+    <div class="siimple-grid-col siimple-grid-col--1">
+      <div id="add-item" class="siimple-btn siimple-btn--navy" onclick="add();">
+        追加
+      </div>
+    </div>
+  </div>
+  <div class="siimple-grid-row">
+  </div>
+  <div class="siimple-grid-row">
+    <div class="siimple-grid-col siimple-grid-col--12">
+      <div class="siimple-table">
+         <div id="counter-list" class="siimple-table-body">
+           <!-- Item List -->
+         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="siimple-footer" align="center" style="position:fixed;bottom:0;width:100%;height:100px;">
+  <address>© 2017 tanjoin</address>
+</footer>
+</body>
+<script type="text/javascript">
+    function add() {
+      var textField = document.getElementById('text-field');
+      if (textField.value.length == 0) {
+        return;
+      }
+      addItem(textField.value);
+    }
+
+    function addItem(text) {
+      var counterList = document.getElementById('counter-list');
+
+      var row = document.createElement('div');
+      row.className = "siimple-table-row siimple-bg--grey";
+
+      var col1 = document.createElement('div');
+      col1.className = "siimple-grid-col siimple-grid-col--8";
+      var label = document.createElement('span');
+      label.className = "siimple-label";
+      label.innerText = text;
+      col1.appendChild(label);
+      row.appendChild(col1);
+
+      var col2 = document.createElement('div');
+      col2.className = "siimple-grid-col siimple-grid-col--1";
+      var label2 = document.createElement('span');
+      label2.className = "siimple-label";
+      label2.innerText = 0;
+      col2.appendChild(label2);
+      row.appendChild(col2);
+
+      var col3 = document.createElement('div');
+      col3.className = "siimple-grid-col siimple-grid-col--3";
+      row.appendChild(col3);
+
+      // button
+
+      var button = document.createElement('button');
+      button.innerText = "+";
+      button.className = "siimple-btn siimple-btn--blue";
+      button.onclick = function() {
+        var num = parseInt(label2.innerText);
+        label2.innerText = num + 1;
+      };
+      col3.appendChild(button);
+
+      var button = document.createElement('button');
+      button.innerText = "-";
+      button.className = "siimple-btn siimple-btn--red";
+      button.onclick = function() {
+        var num = parseInt(label2.innerText);
+        label2.innerText = num - 1;
+      };
+      col3.appendChild(button);
+
+      var button = document.createElement('button');
+      button.innerText = "0";
+      button.className = "siimple-btn siimple-btn--orange";
+      button.onclick = function() {
+        var num = parseInt(label2.innerText);
+        label2.innerText = 0;
+      };
+      col3.appendChild(button);
+
+      var button = document.createElement('button');
+      button.innerText = "×";
+      button.className = "siimple-btn siimple-btn--navy";
+      button.onclick = function() {
+        counterList.removeChild(row);
+      }
+      col3.appendChild(button);
+
+      counterList.appendChild(row);
+    }
+</script>
+</html>
