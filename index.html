@@ -79,15 +79,11 @@
       } catch (e) {
       }
       if (!jsonObject) {
-        alert("Wrong data!");
-        console.log("json:\n" + jsonString);
         return;
       }
-      console.log("OK");
       for (var i = 0; i < jsonObject.items.length; i++) {
         var item = jsonObject.items[i];
-        console.log(JSON.stringify(item));
-        add(item.title, item.count);
+        addItem(item.title, item.count);
       }
     }
   
