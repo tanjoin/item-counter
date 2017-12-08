@@ -74,6 +74,84 @@
       }
     }
   
+    // 名前をキーにしたソート
+    // ascending: 昇順かどうか
+    function sortName(ascending = false) {
+      var data = document.getElementsByClassName("siimple-table-row siimple-bg--grey");
+      var arr = [].slice.call(data);
+      if (ascending) {
+        // 昇順
+        arr = arr.sort(function(a, b) {
+          if ((a.children[0].innerText)>(b.children[0].innerText)) {
+           return -1;
+          }
+          if ((a.children[0].innerText)<(b.children[0].innerText)) {
+           return 1;
+          }
+          return 0;
+        });
+      } else {
+        // 降順
+        arr = arr.sort(function(a, b) {
+          if ((a.children[0].innerText)>(b.children[0].innerText)) {
+           return 1;
+          }
+          if ((a.children[0].innerText)<(b.children[0].innerText)) {
+           return -1;
+          }
+          return 0;
+        });      
+      }
+      // 削除
+      var view = document.getElementById("counter-list");
+      while (view.firstChild) { 
+        view.removeChild(view.firstChild); 
+      }
+      // 追加
+      for (var i = 0; i < arr.length; i++) {
+         view.appendChild(arr[i]);
+      }
+    }
+  
+    // カウント数をキーにしたソート
+    // ascending: 昇順かどうか
+    function sortCount(ascending = false) {
+      var data = document.getElementsByClassName("siimple-table-row siimple-bg--grey");
+      var arr = [].slice.call(data);
+      if (ascending) {
+        // 昇順
+        arr = arr.sort(function(a, b) {
+          if (parseInt(a.children[1].innerText)>parseInt(b.children[1].innerText)) {
+           return -1;
+          }
+          if (parseInt(a.children[1].innerText)<parseInt(b.children[1].innerText)) {
+           return 1;
+          }
+          return 0;
+        });
+      } else {
+        // 降順
+        arr = arr.sort(function(a, b) {
+          if (parseInt(a.children[1].innerText)>parseInt(b.children[1].innerText)) {
+           return 1;
+          }
+          if (parseInt(a.children[1].innerText)<parseInt(b.children[1].innerText)) {
+           return -1;
+          }
+          return 0;
+        });      
+      }
+      // 削除
+      var view = document.getElementById("counter-list");
+      while (view.firstChild) { 
+        view.removeChild(view.firstChild); 
+      }
+      // 追加
+      for (var i = 0; i < arr.length; i++) {
+         view.appendChild(arr[i]);
+      }
+    }
+  
     function importJson() {
       var jsonString = window.prompt("JSONを入力してください", "");
       var jsonObject = null;
@@ -110,8 +188,12 @@
 
       var blob = new Blob([exportField.innerText], { "type": "application/x-msdownload" });
       var a = document.createElement("a");
+      a.innerText = "右クリックで保存";
       a.href = window.URL.createObjectURL(blob);
       a.download = "item-counter.json";
+      while (exportLinkField.firstChild) {
+        exportLinkField.removeChild(exportLinkField.firstChild);
+      }
       exportLinkField.appendChild(a);
     }
   
