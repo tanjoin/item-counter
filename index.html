@@ -51,6 +51,9 @@
            <div id="export-json" class="siimple-grid-col siimple-grid-col--12">
              <!-- JSON -->
            </div>
+           <div id="export-link" class="siimple-grid-col siimple-grid-col--12">
+             <!-- A -->
+           </div>
          </div>
       </div>
     </div>
@@ -89,7 +92,11 @@
   
     function exportJson() {
       var list = document.getElementsByClassName("siimple-table-row siimple-bg--grey");
+      if (list.length == 0) {
+        return;
+      }
       var exportField = document.getElementById('export-json');
+      var exportLinkField = document.getElementById('export-link');
       var jsonObject = {};
       jsonObject.items = [];
       for (var i = 0; i < list.length; i++) {
@@ -100,6 +107,12 @@
         jsonObject.items.push(dic);
       }
       exportField.innerText = JSON.stringify(jsonObject);
+
+      var blob = new Blob([exportField.innerText], { "type": "application/x-msdownload" });
+      var a = document.createElement("a");
+      a.href = window.URL.createObjectURL(blob);
+      a.download = "item-counter.json";
+      exportLinkField.appendChild(a);
     }
   
     function add() {
