@@ -74,6 +74,7 @@
       var jsonObject = JSON.parse(jsonString);
       if (!jsonObject) {
         alert("Wrong data!");
+        console.log("json:\n" + jsonString);
         return;
       }
       for (var i = 0; i < jsonObject.items.length; i++) {
@@ -83,6 +84,7 @@
     }
   
     function exportJson() {
+      var list = document.getElementsByClassName("siimple-table-row siimple-bg--grey");
       var div = document.getElementById('export-json');
       var jsonObject = {};
       jsonObject.items = [];
