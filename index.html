@@ -73,7 +73,11 @@
   
     function importJson() {
       var jsonString = window.prompt("JSONを入力してください", "");
-      var jsonObject = JSON.parse(jsonString);
+      var jsonObject = null;
+      try {
+        jsonObject = JSON.parse(jsonString);
+      } catch (e) {
+      }
       if (!jsonObject) {
         alert("Wrong data!");
         console.log("json:\n" + jsonString);
