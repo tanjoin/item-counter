@@ -45,7 +45,7 @@
          <!-- JSON -->  
          </div>
          <div id="import-btn" class="siimple-btn siimple-btn--navy" onclick="importJson();">
-          エクスポート
+          インポート
          </div>
          <div id="export-btn" class="siimple-btn siimple-btn--navy" onclick="exportJson();">
           エクスポート
@@ -72,7 +72,8 @@
     function importJson() {
       var jsonString = window.prompt("JSONを入力してください", "");
       var jsonObject = JSON.parse(jsonString);
-      if (jsonObject == null) {
+      if (!jsonObject) {
+        alert("Wrong data!");
         return;
       }
       for (var i = 0; i < jsonObject.items.length; i++) {
