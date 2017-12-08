@@ -18,7 +18,7 @@
   </div>
   <div class="siimple-grid-row">
     <div class="siimple-grid-col siimple-grid-col--11">
-      <input id="text-field" type="text" class="siimple-input siimple-input--fluid" placeholder="Item ...">
+      <input id="text-field" type="text" class="siimple-input siimple-input--fluid" placeholder="Item ..." onkeydown="pressEnter();">
     </div>
     <div class="siimple-grid-col siimple-grid-col--1">
       <div id="add-item" class="siimple-btn siimple-btn--navy" onclick="add();">
@@ -44,12 +44,19 @@
 </footer>
 </body>
 <script type="text/javascript">
+    function pressEnter() {
+      if (window.event.keyCode==13) {
+        add();
+      }
+    }
+  
     function add() {
       var textField = document.getElementById('text-field');
       if (textField.value.length == 0) {
         return;
       }
       addItem(textField.value);
+      textField.value = "";
     }
 
     function addItem(text) {
