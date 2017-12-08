@@ -85,7 +85,7 @@
   
     function exportJson() {
       var list = document.getElementsByClassName("siimple-table-row siimple-bg--grey");
-      var div = document.getElementById('export-json');
+      var exportField = document.getElementById('export-json');
       var jsonObject = {};
       jsonObject.items = [];
       for (var i = 0; i < list.length; i++) {
@@ -95,7 +95,7 @@
         dic.count = div.children[1].innerText;
         jsonObject.items.push(dic);
       }
-      div.innerText = JSON.stringify(jsonObject);
+      exportField.innerText = JSON.stringify(jsonObject);
     }
   
     function add() {
