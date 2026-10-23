@@ -171,19 +171,43 @@
     </footer> 
     
     <script>
-        // 初期セット
-        // const sampleData = {
-        // };
+        const STORAGE_KEY = 'item-counter_json_data_comparator_saved_input';
 
-        // window.onload = () => {
-        //     document.getElementById('inputData').value = JSON.stringify(sampleData, null, 2);
-        // };
+        window.onload = () => {
+            const inputEl = document.getElementById('inputData');
+            
+            // localStorageから復元
+            try {
+                const savedData = localStorage.getItem(STORAGE_KEY);
+                if (savedData !== null) {
+                    inputEl.value = savedData;
+                }
+            } catch (e) {
+                console.warn('localStorageへのアクセスが制限されています', e);
+            }
+
+            // 入力時に自動保存
+            inputEl.addEventListener('input', (e) => {
+                try {
+                    localStorage.setItem(STORAGE_KEY, e.target.value);
+                } catch (err) {
+                    console.warn('localStorageへの保存に失敗しました', err);
+                }
+            });
+        };
 
         let currentChart = null;
         let currentParsedData = []; // 追加: グローバルにパース済みデータを保持
 
         function clearText(id) {
             document.getElementById(id).value = '';
+            if (id === 'inputData') {
+                try {
+                    localStorage.removeItem(STORAGE_KEY);
+                } catch (e) {
+                    console.warn('localStorageの削除に失敗しました', e);
+                }
+            }
         }
 
         function showError(msg) {
