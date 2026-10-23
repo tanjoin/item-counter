@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Data Comparator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* スクロールバーの装飾 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8; 
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        
+        <!-- ヘッダー -->
+        <header class="mb-8 flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-2">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    データ内分析ツール
+                </h1>
+                <p class="text-gray-500 mt-2">1つのJSONデータを貼り付けて、中の項目同士を比較・分析します。</p>
+            </div>
+        </header>
+
+        <!-- エラーメッセージ用 -->
+        <div id="errorMessage" class="hidden mb-6 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-sm" role="alert">
+            <p class="font-bold">エラー</p>
+            <p id="errorText">JSONのフォーマットが正しくありません。</p>
+        </div>
+
+        <!-- インポートエリア -->
+        <section class="mb-8">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-lg font-semibold text-gray-700">データ (JSON)</h2>
+                    <button onclick="clearText('inputData')" class="text-sm text-gray-400 hover:text-red-500 transition">クリア</button>
+                </div>
+                <textarea id="inputData" rows="8" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition resize-y" placeholder='{"items": [{"title": "項目名", "count": "100"}]}'></textarea>
+            </div>
+        </section>
+
+        <!-- アクションボタン -->
+        <div class="flex justify-center mb-10">
+            <button onclick="analyzeData()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-full shadow-lg shadow-blue-200 transition transform hover:-translate-y-0.5 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                比較・分析を実行する
+            </button>
+        </div>
+
+        <!-- 結果表示エリア (初期状態は非表示) -->
+        <div id="resultsArea" class="hidden space-y-8">
+            
+            <!-- 基準変更ツールバー -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col md:flex-row flex-wrap items-center gap-6">
+                <div class="flex items-center gap-2">
+                    <label for="groupAxisSelect" class="font-bold text-gray-700 flex items-center gap-2 text-sm">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                        分析の主軸:
+                    </label>
+                    <select id="groupAxisSelect" onchange="changeGroupAxis()" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none cursor-pointer">
+                        <option value="subCategory">括弧内の文字 (小/中/大など)</option>
+                        <option value="category">共通部分 (赤/黄/緑など)</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-2 md:border-l md:border-gray-300 md:pl-6">
+                    <label for="baselineSelect" class="font-bold text-gray-700 flex items-center gap-2 text-sm">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                        差分の基準:
+                    </label>
+                    <select id="baselineSelect" onchange="applyBaseline()" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none cursor-pointer">
+                        <option value="max">最大値 (デフォルト)</option>
+                        <option value="min">最小値</option>
+                        <option value="avg">平均値</option>
+                        <!-- 動的に追加される -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- サマリーカード -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col items-center justify-center">
+                    <p class="text-gray-500 text-sm font-medium">項目数</p>
+                    <p id="totalItems" class="text-3xl font-bold text-gray-800 mt-2">0</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col items-center justify-center">
+                    <p class="text-gray-500 text-sm font-medium">合計カウント</p>
+                    <p id="totalCount" class="text-3xl font-bold text-gray-800 mt-2">0</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col items-center justify-center">
+                    <p class="text-gray-500 text-sm font-medium">平均カウント</p>
+                    <p id="avgCount" class="text-3xl font-bold mt-2 text-blue-600">0</p>
+                </div>
+            </div>
+
+            <!-- グラフとテーブル -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- グラフ -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">項目別 比較グラフ</h3>
+                    <div class="relative h-[400px] w-full">
+                        <canvas id="comparisonChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- テーブル -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">構成割合・詳細テーブル</h3>
+                    <div class="overflow-x-auto flex-grow max-h-[400px] overflow-y-auto pr-2">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="sticky top-0 bg-white">
+                                <tr class="bg-gray-50 text-gray-600 text-sm border-b-2 border-gray-200">
+                                    <th class="p-3 font-semibold">順位</th>
+                                    <th class="p-3 font-semibold">項目名 (Title)</th>
+                                    <th class="p-3 font-semibold text-right">カウント</th>
+                                    <th class="p-3 font-semibold text-right">グループ内差分</th>
+                                    <th class="p-3 font-semibold text-right">割合 (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody" class="text-sm divide-y divide-gray-100">
+                                <!-- JSで動的生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- エクスポートエリア -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-10">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">エクスポート (コピペ用)</h3>
+                    <button onclick="copyExport()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium py-1.5 px-4 rounded transition flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        コピーする
+                    </button>
+                </div>
+                <p class="text-xs text-gray-500 mb-2">※ ExcelやGoogleスプレッドシートにそのまま貼り付けられます (TSV形式)</p>
+                <textarea id="exportArea" rows="6" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 text-sm font-mono focus:ring-2 focus:ring-blue-500 outline-none resize-y" readonly></textarea>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // 初期セット
+        // const sampleData = {
+        // };
+
+        // window.onload = () => {
+        //     document.getElementById('inputData').value = JSON.stringify(sampleData, null, 2);
+        // };
+
+        let currentChart = null;
+        let currentParsedData = []; // 追加: グローバルにパース済みデータを保持
+
+        function clearText(id) {
+            document.getElementById(id).value = '';
+        }
+
+        function showError(msg) {
+            const errDiv = document.getElementById('errorMessage');
+            document.getElementById('errorText').textContent = msg;
+            errDiv.classList.remove('hidden');
+            document.getElementById('resultsArea').classList.add('hidden');
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').classList.add('hidden');
+        }
+
+        function analyzeData() {
+            hideError();
+            const val = document.getElementById('inputData').value.trim();
+
+            if (!val) {
+                showError("JSONデータを入力してください。");
+                return;
+            }
+
+            let data;
+            try {
+                data = JSON.parse(val).items || [];
+            } catch (e) {
+                showError("JSONフォーマットが不正です。");
+                return;
+            }
+
+            if (data.length === 0) {
+                showError("データが空です。");
+                return;
+            }
+
+            // データの集計
+            let totalCount = 0;
+            currentParsedData = data.map(item => {
+                const c = parseInt(item.count, 10) || 0;
+                totalCount += c;
+                
+                // 名前から共通部分(カテゴリ)と括弧内の文字(サブカテゴリ)を自動抽出
+                const match = item.title.match(/^(.*?)[(（](.*?)[)）]$/);
+                let category = item.title.trim();
+                let subCategory = '全体/指定なし'; 
+                if (match) {
+                    category = match[1].trim();
+                    subCategory = match[2].trim();
+                }
+
+                return { title: item.title, count: c, category, subCategory };
+            });
+
+            // 降順にソートしてランキング化
+            currentParsedData.sort((a, b) => b.count - a.count);
+            
+            // 割合と順位を計算
+            currentParsedData = currentParsedData.map((item, index) => {
+                return {
+                    ...item,
+                    rank: index + 1,
+                    ratio: totalCount > 0 ? ((item.count / totalCount) * 100).toFixed(1) : 0
+                };
+            });
+
+            // サマリーの更新
+            document.getElementById('totalItems').textContent = currentParsedData.length.toLocaleString();
+            document.getElementById('totalCount').textContent = totalCount.toLocaleString();
+            
+            const avg = totalCount / currentParsedData.length;
+            document.getElementById('avgCount').textContent = avg.toFixed(1);
+
+            // 主軸と基準を適用して描画
+            changeGroupAxis();
+
+            // 結果エリアを表示
+            document.getElementById('resultsArea').classList.remove('hidden');
+        }
+
+        function changeGroupAxis() {
+            updateBaselineOptions();
+            applyBaseline();
+        }
+
+        function updateBaselineOptions() {
+            const groupAxis = document.getElementById('groupAxisSelect').value;
+            const itemKey = groupAxis === 'subCategory' ? 'category' : 'subCategory';
+            const select = document.getElementById('baselineSelect');
+            const currentVal = select.value;
+            
+            // 既存の動的オプションを削除
+            Array.from(select.options).forEach(opt => {
+                if (opt.value.startsWith('item_')) opt.remove();
+            });
+
+            // 基準として選べるアイテムの一覧を取得してオプションに追加
+            const itemNames = [...new Set(currentParsedData.map(r => r[itemKey]))];
+            itemNames.forEach(name => {
+                if (name !== '全体/指定なし') {
+                    const opt = document.createElement('option');
+                    opt.value = 'item_' + name;
+                    opt.textContent = `「${name}」を基準にする`;
+                    select.appendChild(opt);
+                }
+            });
+
+            // 前回の選択状態を復元（なければmax）
+            if (Array.from(select.options).some(opt => opt.value === currentVal)) {
+                select.value = currentVal;
+            } else {
+                select.value = 'max';
+            }
+        }
+
+        function applyBaseline() {
+            const groupAxis = document.getElementById('groupAxisSelect').value;
+            const itemKey = groupAxis === 'subCategory' ? 'category' : 'subCategory';
+            const mode = document.getElementById('baselineSelect').value;
+            
+            // グループごとのデータを集計
+            const groups = {};
+            currentParsedData.forEach(item => {
+                const gVal = item[groupAxis];
+                const iVal = item[itemKey];
+                if (!groups[gVal]) {
+                    groups[gVal] = { counts: [], items: {} };
+                }
+                groups[gVal].counts.push(item.count);
+                groups[gVal].items[iVal] = item.count;
+            });
+
+            // モードに応じた基準値を計算
+            const groupBaselines = {};
+            for (const gVal in groups) {
+                const group = groups[gVal];
+                if (mode === 'max') {
+                    groupBaselines[gVal] = Math.max(...group.counts);
+                } else if (mode === 'min') {
+                    groupBaselines[gVal] = Math.min(...group.counts);
+                } else if (mode === 'avg') {
+                    const sum = group.counts.reduce((a, b) => a + b, 0);
+                    groupBaselines[gVal] = sum / group.counts.length;
+                } else if (mode.startsWith('item_')) {
+                    const targetItem = mode.replace('item_', '');
+                    // 該当するアイテムが存在しない場合は0とする
+                    groupBaselines[gVal] = group.items[targetItem] !== undefined ? group.items[targetItem] : 0;
+                }
+            }
+
+            // 差分を計算
+            const results = currentParsedData.map(item => {
+                const base = groupBaselines[item[groupAxis]];
+                const diff = item.count - base;
+                return {
+                    ...item,
+                    diff: mode === 'avg' ? Number(diff.toFixed(1)) : diff
+                };
+            });
+
+            // 描画を更新
+            renderTable(results);
+            renderChart(results, groupAxis, itemKey);
+            renderExport(results);
+        }
+
+        function renderTable(results) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            results.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-blue-50 transition';
+
+                // 差分の見た目を調整（プラス・マイナス・ゼロ）
+                let diffDisplay = '';
+                if (row.diff === 0) {
+                    diffDisplay = `<span class="text-gray-400 text-xs">基準 (0)</span>`;
+                } else if (row.diff > 0) {
+                    diffDisplay = `<span class="text-blue-600 font-medium">+${row.diff.toLocaleString()}</span>`;
+                } else {
+                    diffDisplay = `<span class="text-red-500 font-medium">${row.diff.toLocaleString()}</span>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="p-3 font-medium text-gray-500 border-b border-gray-100">${row.rank}</td>
+                    <td class="p-3 font-medium text-gray-800 border-b border-gray-100">${row.title}</td>
+                    <td class="p-3 text-right text-gray-600 border-b border-gray-100">${row.count.toLocaleString()}</td>
+                    <td class="p-3 text-right border-b border-gray-100">${diffDisplay}</td>
+                    <td class="p-3 text-right text-gray-500 border-b border-gray-100">${row.ratio}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        function renderChart(results, groupAxis, itemKey) {
+            const ctx = document.getElementById('comparisonChart').getContext('2d');
+            
+            if (currentChart) {
+                currentChart.destroy();
+            }
+
+            // X軸になるグループ（例: 小、中、大）と、データセットになるアイテム（例: 赤、黄、緑）の一覧
+            const labels = [...new Set(results.map(r => r[groupAxis]))];
+            const datasetKeys = [...new Set(results.map(r => r[itemKey]))];
+
+            // グラフのカラーパレット
+            const colors = [
+                { bg: 'rgba(239, 68, 68, 0.7)', border: 'rgba(239, 68, 68, 1)' },     // 赤
+                { bg: 'rgba(245, 158, 11, 0.7)', border: 'rgba(245, 158, 11, 1)' },   // 黄
+                { bg: 'rgba(249, 115, 22, 0.7)', border: 'rgba(249, 115, 22, 1)' },   // 橙
+                { bg: 'rgba(16, 185, 129, 0.7)', border: 'rgba(16, 185, 129, 1)' },   // 緑
+                { bg: 'rgba(59, 130, 246, 0.7)', border: 'rgba(59, 130, 246, 1)' },   // 青
+                { bg: 'rgba(139, 92, 246, 0.7)', border: 'rgba(139, 92, 246, 1)' },   // 紫
+                { bg: 'rgba(107, 114, 128, 0.7)', border: 'rgba(107, 114, 128, 1)' }  // 灰
+            ];
+
+            // アイテムごとにデータセットを作成（グループ化された棒グラフ）
+            const datasets = datasetKeys.map((dKey, index) => {
+                const color = colors[index % colors.length];
+                return {
+                    label: dKey,
+                    data: labels.map(lVal => {
+                        const item = results.find(r => r[groupAxis] === lVal && r[itemKey] === dKey);
+                        return item ? item.count : 0; // 存在しない場合は0
+                    }),
+                    backgroundColor: color.bg,
+                    borderColor: color.border,
+                    borderWidth: 1,
+                    borderRadius: 4
+                };
+            });
+
+            currentChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels, // X軸
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f3f4f6' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                maxRotation: 0,
+                                minRotation: 0
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                            padding: 12,
+                            titleFont: { size: 14, family: 'Inter' },
+                            bodyFont: { size: 13, family: 'Inter' }
+                        },
+                        legend: {
+                            display: datasetKeys.length > 1 || datasetKeys[0] !== '全体/指定なし',
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderExport(results) {
+            const exportArea = document.getElementById('exportArea');
+            let tsv = "順位\t項目名\tカウント\tグループ内差分\t割合(%)\n";
+            results.forEach(row => {
+                tsv += `${row.rank}\t${row.title}\t${row.count}\t${row.diff}\t${row.ratio}%\n`;
+            });
+            exportArea.value = tsv;
+        }
+
+        function copyExport() {
+            const exportArea = document.getElementById('exportArea');
+            exportArea.select();
+            exportArea.setSelectionRange(0, 99999); 
+            
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(exportArea.value);
+                } else {
+                    document.execCommand('copy');
+                }
+                
+                const originalText = exportArea.value;
+                exportArea.value = "=== クリップボードにコピーしました！ ===\n\n" + originalText;
+                setTimeout(() => {
+                    exportArea.value = originalText;
+                }, 1500);
+
+            } catch (err) {
+                console.error('コピーに失敗しました', err);
+            }
+        }
+    </script>
+</body>
+</html>
