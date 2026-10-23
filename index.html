@@ -5,6 +5,40 @@
 <title>item-counter</title>
 <!-- https://github.com/siimple/siimple -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/siimple@3.0.0/dist/siimple.min.css">
+<style>
+  .site-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding: 1rem 0;
+    border-top: 1px solid #e5e7eb;
+    color: #6b7280;
+    font-size: 0.875rem;
+  }
+  .site-footer address {
+    font-style: normal;
+  }
+  .site-footer nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .site-footer a {
+    color: #334e68;
+    text-decoration: none;
+  }
+  .site-footer a:hover {
+    text-decoration: underline;
+  }
+  @media (max-width: 480px) {
+    .site-footer {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+</style>
 </head>
 <body>
 <div class="siimple-grid siimple-content">
@@ -77,13 +111,14 @@
       </div>
     </div>
   </div>
+  <footer class="site-footer">
+    <address>© 2017-2026 tanjoin</address>
+    <nav aria-label="関連リンク">
+      <a href="graph.html">データ内分析ツール</a>
+      <a href="https://github.com/tanjoin/item-counter">GitHub</a>
+    </nav>
+  </footer>
 </div>
-
-<footer class="mb-8 flex items-center justify-between">
-  <address>© 2017-2026 tanjoin</address>
-  <br>
-  <a href="graph.html">📊</a>・<a href="https://github.com/tanjoin/item-counter">GitHub</a>
-</footer> 
 
 </body>
 <script type="text/javascript">
